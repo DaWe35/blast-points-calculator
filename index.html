@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blast Points and Tokens Calculator</title>
+    <style>
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input, select, button {
+            padding: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 300px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Blast Points and Tokens Calculator</h1>
+    <p>All calculations are estimates based on season 1 and the current price of BLAST tokens.</p>
+    <label for="ethAmount">Amount of Bridged Ethereum (ETH):</label>
+    <input type="number" id="ethAmount" placeholder="Enter amount of ETH" required>
+    
+    <label for="holdingPeriod">Holding Period (days):</label>
+    <input type="number" id="holdingPeriod" placeholder="Enter holding period in days" required>
+    
+    <label for="multiplier">Multiplier (1 to 24):</label>
+    <input type="number" id="multiplier" value="24" min="1" max="24">
+    <br>
+    <button onclick="calculatePoints()">Calculate Points and Blast Tokens</button>
+    
+    <p>Points Earned: <span class="result" id="result"></span></p>
+    <p>Blast Tokens Earned: <span class="result" id="tokensResult"></span></p>
+    <p>Estimated Value in USD: <span class="result" id="valueResult"></span></p>
+
+    <p style="margin-top: 50px;">Made by <a href="https://airdropscan.org">AirdropScan</a> with ❤️</p>
+    
+    <script>
+        async function fetchBlastPrice() {
+            try {
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=blast&vs_currencies=usd');
+                const data = await response.json();
+                return data.blast.usd;
+            } catch (error) {
+                console.error('Error fetching Blast price:', error);
+                return null;
+            }
+        }
+
+        async function calculatePoints() {
+            // Get user inputs
+            const ethAmount = parseFloat(document.getElementById('ethAmount').value);
+            const holdingPeriod = parseInt(document.getElementById('holdingPeriod').value);
+            const multiplier = parseInt(document.getElementById('multiplier').value);
+
+            // Fetch current Blast price in USD
+            const blastTokenPriceUSD = await fetchBlastPrice();
+            if (blastTokenPriceUSD === null) {
+                document.getElementById('priceResult').textContent = 'Error fetching Blast price.';
+                return;
+            }
+
+            // Constants
+            const pointsPerSecondPerETH = 0.03252493376;
+            const secondsInDay = 86400;
+            const blastTokensPerPoint = 0.00065;
+            
+            // Calculate points
+            const points = ethAmount * holdingPeriod * secondsInDay * pointsPerSecondPerETH * multiplier;
+            const roundedPoints = Math.round(points);
+            
+            // Calculate Blast tokens
+            const blastTokens = roundedPoints * blastTokensPerPoint;
+            const roundedBlastTokens = Math.round(blastTokens);
+            
+            // Calculate value in USD
+            const valueInUSD = roundedBlastTokens * blastTokenPriceUSD;
+            
+            // Display results
+            document.getElementById('result').textContent = `${roundedPoints} points`;
+            document.getElementById('tokensResult').textContent = `${roundedBlastTokens} BLAST`;
+            document.getElementById('valueResult').textContent = `$${valueInUSD.toFixed(2)}`;
+        }
+    </script>
+</body>
+</html>
